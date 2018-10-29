@@ -11,4 +11,4 @@ def process_data(data_to_process):
         result |= set(text.split())
 
     if result:
-        yield None, '\n'.join(sorted(result))
+        yield None, '\n'.join(sorted(list(result)))

@@ -24,7 +24,8 @@ PROCESSED_PREFIX = 'processed/'
 
 ERROR_NO_FILE_PART = "ERROR_NO_FILE_PART"
 ERROR_NO_SELECTED_FILE = "ERROR_NO_SELECTED_FILE"
-
+ERROR_NO_SUCH_FILE = "ERROR_NO_SUCH_FILE"
+ERROR_NO_QUERY_TYPE_SPECIFIED = "ERROR_NO_QUERY_TYPE_SPECIFIED"
 
 ENDPOINT_ROOT = "ENDPOINT_ROOT"
 ENDPOINT_SCRAP = "ENDPOINT_SCRAP"
@@ -82,11 +83,16 @@ def with_minio(fn):
 @with_minio
 def put_file(filename, contents, contents_length=None):
     if not isinstance(contents, BytesIO):
-        contents = BytesIO(bytes(contents, encoding='utf-8')
-                           if isinstance(contents, str) else bytes(contents))
-        contents.seek(SEEK_END)
-        contents_length = contents.tell()
-        contents.seek(SEEK_SET)
+        if isinstance(contents, str):
+            contents_length = len(contents)
+            contents = bytes(contents, encoding='utf-8')
+        else:
+            contents = bytes(contents)
+        contents = BytesIO(contents)
+        if not contents_length:
+            contents.seek(SEEK_END)
+            contents_length = contents.tell()
+            contents.seek(SEEK_SET)
     return minioClient.put_object(MINIO_BUCKET_NAME, filename, contents,
                                   contents_length or len(contents))
 

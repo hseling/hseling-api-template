@@ -4,7 +4,11 @@ def process_data(data_to_process):
     result = set()
 
     for _, contents in data_to_process.items():
-        result |= set((contents.decode('utf-8') if isinstance(contents, bytes) else contents).split())
+        if isinstance(contents, bytes):
+            text = contents.decode('utf-8')
+        else:
+            text = contents
+        result |= set(text.split())
 
     if result:
         yield None, '\n'.join(sorted(result))

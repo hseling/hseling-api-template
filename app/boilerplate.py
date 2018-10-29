@@ -82,11 +82,13 @@ def with_minio(fn):
 @with_minio
 def put_file(filename, contents, contents_length=None):
     if not isinstance(contents, BytesIO):
-        contents = BytesIO(bytes(contents, encoding='utf-8') if isinstance(contents, str) else bytes(contents))
+        contents = BytesIO(bytes(contents, encoding='utf-8')
+                           if isinstance(contents, str) else bytes(contents))
         contents.seek(SEEK_END)
         contents_length = contents.tell()
         contents.seek(SEEK_SET)
-    return minioClient.put_object(MINIO_BUCKET_NAME, filename, contents, contents_length or len(contents))
+    return minioClient.put_object(MINIO_BUCKET_NAME, filename, contents,
+                                  contents_length or len(contents))
 
 
 @with_minio
@@ -96,12 +98,14 @@ def get_file(filename):
 
 @with_minio
 def list_files(**kwargs):
-    return list(str(file_id.object_name) for file_id in minioClient.list_objects(MINIO_BUCKET_NAME, **kwargs))
+    return list(str(file_id.object_name) for file_id
+                in minioClient.list_objects(MINIO_BUCKET_NAME, **kwargs))
 
 
 def allowed_file(filename, allowed_extensions=None):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in (allowed_extensions or ALLOWED_EXTENSIONS)
+           filename.rsplit('.', 1)[1].lower() \
+           in (allowed_extensions or ALLOWED_EXTENSIONS)
 
 
 def get_upload_form():
@@ -115,14 +119,18 @@ def get_upload_form():
     </form>
     '''
 
+
 def get_task_status(task_id):
     task = result.AsyncResult(str(task_id))
-    print(task)
+    if isinstance(task.result, BaseException):
+        task_result = str(task.result)
+    else:
+        task_result = task.result
     return {
         "task_id": str(task.id),
         "ready": task.ready(),
         "status": task.status,
-        "result": str(task.result) if isinstance(task.result, BaseException) else task.result,
+        "result": task_result,
         "error": str(task.traceback)
     }
 
@@ -143,6 +151,9 @@ def save_file(upload_file):
 def add_processed_file(processed_file_id, contents, extension=None):
     if not processed_file_id:
         processed_file_id = str(uuid4())
-    filename = PROCESSED_PREFIX + processed_file_id + ("." + extension) if extension else ""
+    if extension:
+        filename = PROCESSED_PREFIX + processed_file_id + ("." + extension)
+    else:
+        filename = ""
     put_file(filename, contents)
     return filename

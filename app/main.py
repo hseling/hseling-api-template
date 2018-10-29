@@ -1,4 +1,4 @@
-from flask import Flask, jsonify, request, redirect
+from flask import Flask, jsonify, request
 from logging import getLogger
 
 import boilerplate
@@ -22,16 +22,22 @@ celery = boilerplate.make_celery(app)
 
 @celery.task
 def process_task(file_ids_list=None):
-    files_to_process = boilerplate.list_files(recursive=True, prefix=boilerplate.UPLOAD_PREFIX)
+    files_to_process = boilerplate.list_files(recursive=True,
+                                              prefix=boilerplate.UPLOAD_PREFIX)
     if file_ids_list:
-        files_to_process = [boilerplate.UPLOAD_PREFIX + file_id for file_id in file_ids_list
-                            if (boilerplate.UPLOAD_PREFIX + file_id) in files_to_process]
-    data_to_process = {file_id[len(boilerplate.UPLOAD_PREFIX):]: \
-                       boilerplate.get_file(file_id) for file_id in files_to_process}
+        files_to_process = [boilerplate.UPLOAD_PREFIX + file_id
+                            for file_id in file_ids_list
+                            if (boilerplate.UPLOAD_PREFIX + file_id)
+                            in files_to_process]
+    data_to_process = {file_id[len(boilerplate.UPLOAD_PREFIX):]:
+                       boilerplate.get_file(file_id)
+                       for file_id in files_to_process}
     processed_file_ids = list()
     print(data_to_process)
     for processed_file_id, contents in process_data(data_to_process):
-        processed_file_ids.append(boilerplate.add_processed_file(processed_file_id, contents))
+        processed_file_ids.append(
+            boilerplate.add_processed_file(processed_file_id,
+                                           contents))
     return processed_file_ids
 
 
@@ -43,7 +49,9 @@ def upload_file():
         upload_file = request.files['file']
         if upload_file.filename == '':
             return jsonify({"error": boilerplate.ERROR_NO_SELECTED_FILE})
-        if upload_file and boilerplate.allowed_file(upload_file.filename, allowed_extensions=ALLOWED_EXTENSIONS):
+        if upload_file and boilerplate.allowed_file(
+                upload_file.filename,
+                allowed_extensions=ALLOWED_EXTENSIONS):
             return jsonify(boilerplate.save_file(upload_file))
     return boilerplate.get_upload_form()
 
@@ -76,7 +84,8 @@ def get_endpoints(ctx):
 
     all_endpoints = [
         endpoint("root", boilerplate.ENDPOINT_ROOT),
-        endpoint("scrap", boilerplate.ENDPOINT_SCRAP, not ctx["restricted_mode"]),
+        endpoint("scrap", boilerplate.ENDPOINT_SCRAP,
+                 not ctx["restricted_mode"]),
         endpoint("upload", boilerplate.ENDPOINT_UPLOAD),
         endpoint("process", boilerplate.ENDPOINT_PROCESS),
         endpoint("query", boilerplate.ENDPOINT_QUERY),
@@ -87,8 +96,8 @@ def get_endpoints(ctx):
 
 
 @app.route("/")
-def main():
-    ctx = {"restricted_mode": RESTRICTED_MODE}
+def main_endpoint():
+    ctx = {"restricted_mode": boilerplate.RESTRICTED_MODE}
     return jsonify({"endpoints": get_endpoints(ctx)})
 
 

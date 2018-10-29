@@ -1,10 +1,10 @@
-def process_data(*args, **kwargs):
-    """Process data - sum or concatenate all arguments.
+def process_data(data_to_process):
+    """Split all files contents and then combine unique words into resulting file.
     """
-    result = None
-    for arg in args:
-        if result:
-            result += arg
-        else:
-            result = arg
-    return result
+    result = set()
+
+    for _, contents in data_to_process.items():
+        result |= set((contents.decode('utf-8') if isinstance(contents, bytes) else contents).split())
+
+    if result:
+        yield None, '\n'.join(sorted(result))

@@ -18,7 +18,7 @@ REQUIRES_PYTHON = '>=3.6.0'
 VERSION = '1.0.0'
 
 REQUIRED = [
-    'flask', 'redis', 'celery[redis]', 'minio', 'requests', 'lxml', 'html5lib', 'beautifulsoup4', 'scrapy'
+    'requests', 'lxml', 'html5lib', 'beautifulsoup4', 'scrapy'
 ]
 
 EXTRAS = {}
@@ -50,7 +50,7 @@ setup(
     author_email=EMAIL,
     python_requires=REQUIRES_PYTHON,
     url=URL,
-    packages=find_packages(exclude=('tests',)),
+    packages=find_packages(exclude=('tests', 'app')),
     install_requires=REQUIRED,
     extras_require=EXTRAS,
     include_package_data=True,

@@ -64,16 +64,16 @@ def with_minio(fn):
     def fn_inner(*args, **kwargs):
         try:
             minioClient.make_bucket(MINIO_BUCKET_NAME)
-        except BucketAlreadyOwnedByYou as err:
+        except BucketAlreadyOwnedByYou:
             pass
-        except BucketAlreadyExists as err:
+        except BucketAlreadyExists:
             pass
-        except ResponseError as err:
+        except ResponseError:
             raise
 
         try:
             return fn(*args, **kwargs)
-        except ResponseError as err:
+        except ResponseError:
             raise
 
     return fn_inner

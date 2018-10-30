@@ -4,6 +4,7 @@ from logging import getLogger
 import boilerplate
 
 from hseling_api_template.process import process_data
+from hseling_api_template.query import query_data
 
 
 ALLOWED_EXTENSIONS = ['txt']
@@ -33,16 +34,18 @@ def process_task(file_ids_list=None):
                        boilerplate.get_file(file_id)
                        for file_id in files_to_process}
     processed_file_ids = list()
-    print(data_to_process)
     for processed_file_id, contents in process_data(data_to_process):
         processed_file_ids.append(
-            boilerplate.add_processed_file(processed_file_id,
-                                           contents))
+            boilerplate.add_processed_file(
+                processed_file_id,
+                contents,
+                extension='txt'
+            ))
     return processed_file_ids
 
 
 @app.route('/upload', methods=['GET', 'POST'])
-def upload_file():
+def upload_endpoint():
     if request.method == 'POST':
         if 'file' not in request.files:
             return jsonify({"error": boilerplate.ERROR_NO_FILE_PART})
@@ -56,6 +59,13 @@ def upload_file():
     return boilerplate.get_upload_form()
 
 
+@app.route('/files/<path:file_id>')
+def get_file_endpoint(file_id):
+    if file_id in boilerplate.list_files(recursive=True):
+        return boilerplate.get_file(file_id)
+    return jsonify({'error': boilerplate.ERROR_NO_SUCH_FILE})
+
+
 @app.route('/files')
 def list_files_endpoint():
     return jsonify({'file_ids': boilerplate.list_files(recursive=True)})
@@ -67,6 +77,19 @@ def process_endpoint(file_ids=None):
     file_ids_list = file_ids and file_ids.split(",")
     task = process_task.delay(file_ids_list)
     return jsonify({"task_id": str(task)})
+
+
+@app.route("/query/<path:file_id>")
+def query_endpoint(file_id):
+    query_type = request.args.get('type')
+    if not query_type:
+        return jsonify({"error": boilerplate.ERROR_NO_QUERY_TYPE_SPECIFIED})
+    processed_file_id = boilerplate.PROCESSED_PREFIX + file_id
+    if processed_file_id in boilerplate.list_files(recursive=True):
+        return jsonify({"result": query_data({
+            processed_file_id: boilerplate.get_file(processed_file_id)
+        }, query_type=query_type)})
+    return jsonify({"error": boilerplate.ERROR_NO_SUCH_FILE})
 
 
 @app.route("/status/<task_id>")

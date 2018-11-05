@@ -9,6 +9,8 @@ from minio import Minio
 from minio.error import (ResponseError, BucketAlreadyOwnedByYou,
                          BucketAlreadyExists)
 
+from mysql.connector import connect
+
 
 CELERY_BROKER_URL = environ["CELERY_BROKER_URL"]
 CELERY_RESULT_BACKEND = environ["CELERY_RESULT_BACKEND"]
@@ -17,6 +19,11 @@ MINIO_URL = environ["MINIO_URL"]
 MINIO_ACCESS_KEY = environ["MINIO_ACCESS_KEY"]
 MINIO_SECRET_KEY = environ["MINIO_SECRET_KEY"]
 MINIO_BUCKET_NAME = environ['MINIO_BUCKET_NAME']
+
+MYSQL_HOST = environ["MYSQL_HOST"]
+MYSQL_USER = environ["MYSQL_USER"]
+MYSQL_PASSWORD = environ["MYSQL_PASSWORD"]
+MYSQL_DATABASE = environ["MYSQL_DATABASE"]
 
 ALLOWED_EXTENSIONS = ['txt', 'xml']
 UPLOAD_PREFIX = 'upload/'
@@ -53,6 +60,13 @@ def make_celery(app):
 
     celery.Task = ContextTask
     return celery
+
+
+def get_mysql_connection():
+    mysqlClient = connect(user=MYSQL_USER, password=MYSQL_PASSWORD,
+                          host=MYSQL_HOST,
+                          database=MYSQL_DATABASE)
+    return mysqlClient
 
 
 minioClient = Minio(MINIO_URL,

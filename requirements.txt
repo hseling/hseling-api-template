@@ -2,6 +2,8 @@ flask
 redis
 celery[redis]
 minio
+mysql
+mysql-connector
 requests
 lxml
 html5lib

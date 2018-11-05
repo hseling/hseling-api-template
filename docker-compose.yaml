@@ -7,6 +7,11 @@ x-common-variables: &common-variables
  MINIO_SECRET_KEY: minio123
  MINIO_URL: minio:9000
  MINIO_BUCKET_NAME: hse-api-bucket
+ MYSQL_HOST: mysql
+ MYSQL_ROOT_PASSWORD: mysql123
+ MYSQL_USER: mysql
+ MYSQL_PASSWORD: mysql123
+ MYSQL_DATABASE: hse-api-database
  RESTRICTED_MODE: 0
 
 services:
@@ -17,6 +22,7 @@ services:
   links:
    - redis
    - minio
+   - mysql
    - hse-api-celery
   environment: *common-variables
 
@@ -26,6 +32,7 @@ services:
   links:
    - redis
    - minio
+   - mysql
   environment: *common-variables
 
  minio:
@@ -35,6 +42,12 @@ services:
   ports:
    - "9000:9000"
   command: server /data/minio
+  environment: *common-variables
+
+ mysql:
+  image: mysql
+  command: --default-authentication-plugin=mysql_native_password
+  restart: always
   environment: *common-variables
 
  redis:

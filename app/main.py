@@ -97,6 +97,17 @@ def status_endpoint(task_id):
     return jsonify(boilerplate.get_task_status(task_id))
 
 
+@app.route("/test_mysql")
+def test_mysql_endpoint():
+    conn = boilerplate.get_mysql_connection()
+    cur = conn.cursor()
+    cur.execute("SELECT table_name, column_name FROM INFORMATION_SCHEMA.COLUMNS")
+    schema = dict()
+    for table_name, column_name in cur.fetchall():
+        schema.setdefault(table_name.decode('utf-8'), []).append(column_name)
+    return jsonify({"schema": schema})
+
+
 def get_endpoints(ctx):
     def endpoint(name, description, active=True):
         return {

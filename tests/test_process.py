@@ -5,9 +5,9 @@ from hseling_api_template.process import process_data
 
 test_data = [
     ({}, []),
-    ({"asd": "a b c"}, ["a\nb\nc"]),
-    ({"asd": "a b c", "zxc": "a c d"}, ["a\nb\nc\nd"]),
-    ({"asd": b"a b c"}, ["a\nb\nc"])
+    ({"asd": "a b c"}, ["a!!!\nb!!!\nc!!!"]),
+    ({"asd": "a b c", "zxc": "a c d"}, ["a!!!\nb!!!\nc!!!\nd!!!"]),
+    ({"asd": b"a b c"}, ["a!!!\nb!!!\nc!!!"])
 ]
 
 

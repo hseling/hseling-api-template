@@ -1,5 +1,5 @@
 flask
-redis
+redis==2.10.6
 celery[redis]
 minio
 mysql

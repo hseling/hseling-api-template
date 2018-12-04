@@ -8,7 +8,7 @@ def process_data(data_to_process):
             text = contents.decode('utf-8')
         else:
             text = contents
-        result |= set(text.split())
+        result |= set([word + "!!!" for word in text.split()])
 
     if result:
         yield None, '\n'.join(sorted(list(result)))

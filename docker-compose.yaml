@@ -3,10 +3,6 @@ version: '3.4'
 x-common-variables: &common-variables
  CELERY_BROKER_URL: redis://redis:6379
  CELERY_RESULT_BACKEND: redis://redis:6379
- MINIO_ACCESS_KEY: minio
- MINIO_SECRET_KEY: minio123
- MINIO_URL: minio:9000
- MINIO_BUCKET_NAME: hse-api-bucket
  MYSQL_HOST: mysql
  MYSQL_ROOT_PASSWORD: mysql123
  MYSQL_USER: mysql
@@ -18,31 +14,28 @@ services:
  hse-api-web:
   build: .
   ports:
-   - "80:80"
-  links:
-   - redis
-   - minio
-   - mysql
-   - hse-api-celery
+    - "80:80"
+  depends_on:
+    - redis
+    - mysql
+    - hse-api-celery
   environment: *common-variables
+  volumes:
+    - type: bind
+      source: ./data
+      target: /data
 
  hse-api-celery:
   build: .
   command: celery -A main.celery worker
-  links:
-   - redis
-   - minio
-   - mysql
+  depends_on:
+    - redis
+    - mysql
   environment: *common-variables
-
- minio:
-  image: minio/minio:latest
   volumes:
-   - data:/data
-  ports:
-   - "9000:9000"
-  command: server /data/minio
-  environment: *common-variables
+    - type: bind
+      source: ./data
+      target: /data
 
  mysql:
   image: mysql
@@ -52,6 +45,3 @@ services:
 
  redis:
   image: redis:latest
-
-volumes:
-  data:

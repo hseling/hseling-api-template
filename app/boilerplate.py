@@ -1,4 +1,6 @@
-from os import environ
+from os import environ, listdir, path, walk
+import hashlib
+from shutil import copy2
 from io import BytesIO, SEEK_END, SEEK_SET
 from uuid import uuid4
 
@@ -27,6 +29,7 @@ MYSQL_DATABASE = environ["MYSQL_DATABASE"]
 
 ALLOWED_EXTENSIONS = ['txt', 'xml']
 UPLOAD_PREFIX = 'upload/'
+PATH_TO_DATA = "/data/"
 PROCESSED_PREFIX = 'processed/'
 
 ERROR_NO_FILE_PART = "ERROR_NO_FILE_PART"
@@ -68,33 +71,16 @@ def get_mysql_connection():
                           database=MYSQL_DATABASE)
     return mysqlClient
 
+def md5sum(filename):
+    with open(filename, mode='rb') as f:
+        d = hashlib.md5()
+        while True:
+            buf = f.read(4096) # 128 is smaller than the typical filesystem block
+            if not buf:
+                break
+            d.update(buf)
+        return d.hexdigest()
 
-minioClient = Minio(MINIO_URL,
-                    access_key=MINIO_ACCESS_KEY,
-                    secret_key=MINIO_SECRET_KEY,
-                    secure=False)
-
-
-def with_minio(fn):
-    def fn_inner(*args, **kwargs):
-        try:
-            minioClient.make_bucket(MINIO_BUCKET_NAME)
-        except BucketAlreadyOwnedByYou:
-            pass
-        except BucketAlreadyExists:
-            pass
-        except ResponseError:
-            raise
-
-        try:
-            return fn(*args, **kwargs)
-        except ResponseError:
-            raise
-
-    return fn_inner
-
-
-@with_minio
 def put_file(filename, contents, contents_length=None):
     if not isinstance(contents, BytesIO):
         if isinstance(contents, str):
@@ -107,20 +93,25 @@ def put_file(filename, contents, contents_length=None):
             contents.seek(SEEK_END)
             contents_length = contents.tell()
             contents.seek(SEEK_SET)
-    return minioClient.put_object(MINIO_BUCKET_NAME, filename, contents,
-                                  contents_length or len(contents))
+    with open(PATH_TO_DATA + filename, 'w+b') as f:
+        f.write(contents.read())
+    return md5sum(PATH_TO_DATA + filename)
 
-
-@with_minio
 def get_file(filename):
-    return minioClient.get_object(MINIO_BUCKET_NAME, filename).data
+    with open(PATH_TO_DATA + filename) as f:
+        return f.read()
 
-
-@with_minio
-def list_files(**kwargs):
-    return list(str(file_id.object_name) for file_id
-                in minioClient.list_objects(MINIO_BUCKET_NAME, **kwargs))
-
+def list_files(prefix = None, recursive=True):
+    if recursive:
+        if prefix is not None:
+            return list(path.join(r,file)[len(PATH_TO_DATA):] for r,d,f in walk(PATH_TO_DATA + prefix) for file in f)
+        else:
+            return list(path.join(r,file)[len(PATH_TO_DATA):] for r,d,f in walk(PATH_TO_DATA) for file in f)
+    else:
+        if prefix is not None:
+            return list(path.join(prefix, f) for f in listdir(PATH_TO_DATA + prefix) if path.isfile(PATH_TO_DATA + prefix + f))
+        else:
+            return list(f for f in listdir(PATH_TO_DATA + prefix) if path.isfile(PATH_TO_DATA + prefix + f))
 
 def allowed_file(filename, allowed_extensions=None):
     return '.' in filename and \

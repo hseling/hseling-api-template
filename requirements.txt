@@ -1,7 +1,7 @@
 flask
 redis==2.10.6
-celery[redis]
-minio
+celery[redis]==4.1.1
+kombu==4.2.0
 mysql
 mysql-connector
 requests
